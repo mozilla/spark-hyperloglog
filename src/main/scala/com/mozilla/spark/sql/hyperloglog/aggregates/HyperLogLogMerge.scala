@@ -18,7 +18,20 @@ import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
 
+/**
+ * This class fixes HyperLogLogMerge when there are no
+ * rows, or when input rows are NULL.
+ */
 class HyperLogLogMerge extends UserDefinedAggregateFunction {
+
+  /**
+   * This HLL instance is has zero counts.
+   *
+   * scala> (new DenseHLL(12, new Bytes(Array.fill[Byte](1 << 12)(0)))).approximateSize.estimate
+   * res0: Long = 0
+   */
+  val emptyHll = new DenseHLL(12, new Bytes(Array.fill[Byte](1 << 12)(0)))
+
   def inputSchema: org.apache.spark.sql.types.StructType =
     StructType(StructField("value", BinaryType) :: Nil)
 
@@ -35,13 +48,15 @@ class HyperLogLogMerge extends UserDefinedAggregateFunction {
   }
 
   def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-    val hll = HyperLogLog.fromBytes(input.getAs[Array[Byte]](0)).toDenseHLL
+    if (input(0) != null) {
+      val hll = HyperLogLog.fromBytes(input.getAs[Array[Byte]](0)).toDenseHLL
 
-    if (buffer(0) != null) {
-      hll.updateInto(buffer.getAs[Array[Byte]](0))
-    } else {
-      buffer(0) = hll.v.array
-      buffer(1) = hll.bits
+      if (buffer(0) != null) {
+        hll.updateInto(buffer.getAs[Array[Byte]](0))
+      } else {
+        buffer(0) = hll.v.array
+        buffer(1) = hll.bits
+      }
     }
   }
 
@@ -56,7 +71,10 @@ class HyperLogLogMerge extends UserDefinedAggregateFunction {
   }
 
   def evaluate(buffer: Row): Any = {
-    val state = new DenseHLL(buffer.getAs[Int](1), new Bytes(buffer.getAs[Array[Byte]](0)))
+    val state = buffer(0) match {
+      case null => emptyHll
+      case o => new DenseHLL(buffer.getAs[Int](1), new Bytes(buffer.getAs[Array[Byte]](0)))
+    }
     com.twitter.algebird.HyperLogLog.toBytes(state)
   }
 }
