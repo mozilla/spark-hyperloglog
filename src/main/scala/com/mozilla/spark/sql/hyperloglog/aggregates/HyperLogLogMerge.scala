@@ -24,13 +24,15 @@ import org.apache.spark.sql.types._
  */
 class HyperLogLogMerge extends UserDefinedAggregateFunction {
 
+  val DefaultBits = 12
+
   /**
-   * This HLL instance is has zero counts.
+   * This HLL instance has zero counts.
    *
    * scala> (new DenseHLL(12, new Bytes(Array.fill[Byte](1 << 12)(0)))).approximateSize.estimate
    * res0: Long = 0
    */
-  val emptyHll = new DenseHLL(12, new Bytes(Array.fill[Byte](1 << 12)(0)))
+  val emptyHll = new DenseHLL(DefaultBits, new Bytes(Array.fill[Byte](1 << DefaultBits)(0)))
 
   def inputSchema: org.apache.spark.sql.types.StructType =
     StructType(StructField("value", BinaryType) :: Nil)
@@ -76,5 +78,22 @@ class HyperLogLogMerge extends UserDefinedAggregateFunction {
       case o => new DenseHLL(buffer.getAs[Int](1), new Bytes(buffer.getAs[Array[Byte]](0)))
     }
     com.twitter.algebird.HyperLogLog.toBytes(state)
+  }
+}
+
+/**
+ * This class adds the capability to take in
+ * another Boolean column and only adds the
+ * associated hll if the Boolean column is `True`.
+ */
+class FilteredHyperLogLogMerge extends HyperLogLogMerge {
+
+  override def inputSchema: org.apache.spark.sql.types.StructType =
+    StructType(StructField("value", BinaryType) :: StructField("filtered", BooleanType) :: Nil)
+
+  override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
+    if (input(1) != null && input.getAs[Boolean](1)) {
+      super.update(buffer, input)
+    }
   }
 }

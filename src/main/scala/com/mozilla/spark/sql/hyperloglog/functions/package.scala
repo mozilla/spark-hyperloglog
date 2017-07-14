@@ -25,7 +25,7 @@ package object functions {
   def hllCreate(x: String, bits: Int): Array[Byte] = {
     x match {
       case null => null
-      case v: String =>
+      case _ =>
         val monoid = new HyperLogLogMonoid(bits)
         HyperLogLog.toBytes(monoid.toHLL(x))
     }

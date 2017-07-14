@@ -37,13 +37,19 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     ClientRow(null, "linux")
   )
 
-  "Algebird's HyperLogLog" can "be used from Spark" in {
-    import spark.implicits._
+  override def beforeAll() {
 
     val hllMerge = new HyperLogLogMerge
     spark.udf.register("hll_merge", hllMerge)
     spark.udf.register("hll_create", hllCreate _)
     spark.udf.register("hll_cardinality", hllCardinality _)
+
+    val filteredHllMerge = new FilteredHyperLogLogMerge
+    spark.udf.register("hll_filtered_merge", filteredHllMerge)
+  }
+
+  "Algebird's HyperLogLog" can "be used from Spark" in {
+    import spark.implicits._
 
     val rows = predata.toDS().toDF()
       .selectExpr("hll_create(id, 12) as hll")
@@ -56,11 +62,6 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   "HyperLogLog" can "handle null and missing values" in {
     import spark.implicits._
 
-    val hllMerge = new HyperLogLogMerge
-    spark.udf.register("hll_merge", hllMerge)
-    spark.udf.register("hll_create", hllCreate _)
-    spark.udf.register("hll_cardinality", hllCardinality _)
-
     val rows = predata.toDS()
       .selectExpr("os", "hll_create(id, 12) as hll")
       .groupBy()
@@ -72,6 +73,18 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     rows(0).getAs[Integer]("windows") should be (2)
     rows(0).getAs[Integer]("macos") should be (1)
     rows(0).getAs[Integer]("linux") should be (0)
+  }
+
+  "Filtered Hyperloglog" can "correctly count clients" in {
+    import spark.implicits._
+
+    val rows = predata.toDS()
+      .selectExpr("os = 'windows' as allowed", "hll_create(id, 12) as hll")
+      .groupBy()
+      .agg(expr("hll_cardinality(hll_filtered_merge(hll, allowed)) as count"))
+      .collect()
+
+    rows(0)(0) should be (2)
   }
 
   override def afterAll = {
