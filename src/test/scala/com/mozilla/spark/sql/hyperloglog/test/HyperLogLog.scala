@@ -15,31 +15,79 @@ package com.mozilla.spark.sql.hyperloglog.test
 
 import com.mozilla.spark.sql.hyperloglog.aggregates._
 import com.mozilla.spark.sql.hyperloglog.functions._
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.functions._
-import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.{FlatSpec, Matchers}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.expr
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class HyperLogLogTest extends FlatSpec with Matchers{
- "Algebird's HyperLogLog" can "be used from Spark" in {
-  val sparkConf = new SparkConf().setAppName("HyperLogLog")
-  sparkConf.setMaster(sparkConf.get("spark.master", "local[1]"))
+case class ClientRow(id: String, os: String)
 
-  val sc = new SparkContext(sparkConf)
-  val sqlContext = new SQLContext(sc)
-  import sqlContext.implicits._
+class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
-  val hllMerge = new HyperLogLogMerge
-  sqlContext.udf.register("hll_merge", hllMerge)
-  sqlContext.udf.register("hll_create", hllCreate _)
-  sqlContext.udf.register("hll_cardinality", hllCardinality _)
+  val spark = SparkSession.builder()
+      .master("local[*]")
+      .appName("Spark HyperLogLog Test")
+      .getOrCreate()
 
-  val frame = sc.parallelize(List("a", "b", "c", "c"), 4).toDF("id")
-  val count = frame
-    .select(expr("hll_create(id, 12) as hll"))
-    .groupBy()
-    .agg(expr("hll_cardinality(hll_merge(hll)) as count"))
-    .collect()
-  count(0)(0) should be (3)
- }
+  val osList = "windows" :: "macos" :: "linux" :: Nil
+  val predata = List(
+    ClientRow("a", "windows"),
+    ClientRow("b", "windows"),
+    ClientRow("c", "macos"),
+    ClientRow("c", "macos"),
+    ClientRow(null, "linux")
+  )
+
+  override def beforeAll() {
+
+    val hllMerge = new HyperLogLogMerge
+    spark.udf.register("hll_merge", hllMerge)
+    spark.udf.register("hll_create", hllCreate _)
+    spark.udf.register("hll_cardinality", hllCardinality _)
+
+    val filteredHllMerge = new FilteredHyperLogLogMerge
+    spark.udf.register("hll_filtered_merge", filteredHllMerge)
+  }
+
+  "Algebird's HyperLogLog" can "be used from Spark" in {
+    import spark.implicits._
+
+    val rows = predata.toDS().toDF()
+      .selectExpr("hll_create(id, 12) as hll")
+      .groupBy()
+      .agg(expr("hll_cardinality(hll_merge(hll)) as count"))
+      .collect()
+    rows(0)(0) should be (3)
+  }
+
+  "HyperLogLog" can "handle null and missing values" in {
+    import spark.implicits._
+
+    val rows = predata.toDS()
+      .selectExpr("os", "hll_create(id, 12) as hll")
+      .groupBy()
+      .pivot("os", osList)
+      .agg(expr("hll_cardinality(hll_merge(hll)) as count"))
+      .collect()
+
+    rows.length should be (1)
+    rows(0).getAs[Integer]("windows") should be (2)
+    rows(0).getAs[Integer]("macos") should be (1)
+    rows(0).getAs[Integer]("linux") should be (0)
+  }
+
+  "Filtered Hyperloglog" can "correctly count clients" in {
+    import spark.implicits._
+
+    val rows = predata.toDS()
+      .selectExpr("os = 'windows' as allowed", "hll_create(id, 12) as hll")
+      .groupBy()
+      .agg(expr("hll_cardinality(hll_filtered_merge(hll, allowed)) as count"))
+      .collect()
+
+    rows(0)(0) should be (2)
+  }
+
+  override def afterAll = {
+    spark.stop()
+  }
 }
