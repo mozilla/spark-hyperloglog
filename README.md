@@ -36,10 +36,10 @@ yields:
 ### Deployment
 1. Configure your credentials for the Spark Packages repository in `~/.ivy2/.sbtcredentials`, e.g:
    ```
-   realm=Spark Packages Realm
-   host=spark-packages.org
+   realm=Sonatype Nexus Repository Manager
+   host=oss.sonatype.org
    user=foo
    password=bar
    ```
 
-2. Publish a new release with `sbt spPublish`
+2. Publish a new release with `sbt publishSigned`
