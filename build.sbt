@@ -20,11 +20,11 @@ credentials += Credentials(Path.userHome / ".ivy2" / ".sbtcredentials")
 publishMavenStyle := true
 
 publishTo := {
-  val nexus = "https://oss.sonatype.org/"
+  val localMaven = "s3://net-mozaws-data-us-west-2-ops-mavenrepo/"
   if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
+    Some("snapshots" at localMaven + "snapshots")
   else
-    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    Some("releases"  at localMaven + "releases")
 }
 
 licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
