@@ -5,7 +5,7 @@ HyperLogLog sets between Spark and Presto.
 
 [![Build Status](https://travis-ci.org/vitillo/spark-hyperloglog.svg?branch=master)](https://travis-ci.org/vitillo/spark-hyperloglog)
 [![codecov.io](https://codecov.io/github/vitillo/spark-hyperloglog/coverage.svg?branch=master)](https://codecov.io/github/vitillo/spark-hyperloglog?branch=master)
-[![CircleCi](https://circleci.com/gh/mozilla/spark-hyperloglog.png?circle-token=5506f56072f0198ece2995a8539c174cc648c9e4)](https://circleci.com/gh/mozilla/spark-hyperloglog.svg?style=shield&circle-token=5506f56072f0198ece2995a8539c174cc648c9e4)
+[![CircleCi](https://circleci.com/gh/mozilla/spark-hyperloglog.svg?style=shield&circle-token=5506f56072f0198ece2995a8539c174cc648c9e4)](https://circleci.com/gh/mozilla/spark-hyperloglog)
 
 
 ### Example usage
