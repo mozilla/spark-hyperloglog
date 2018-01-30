@@ -15,21 +15,20 @@ import shutil
 VERSION = '2.1.0'
 
 JARS_TARGET = 'deps/jars'
-ASSEMBLY_JAR = "*-assembly-{}-*.jar".format(VERSION)
+JAR_FILE = "*-assembly-{}-*.jar".format(VERSION)
 
 
 is_packaging = (
     os.path.isfile("../build.sbt") and
-    not os.path.isfile(os.path.join(JARS_TARGET, ASSEMBLY_JAR))
+    not os.path.isfile(os.path.join(JARS_TARGET, JAR_FILE))
 )
 
 if is_packaging:
     SPARK_HLL_HOME = os.path.abspath("../")
     JAR_PATH = glob.glob(os.path.join(
-        SPARK_HLL_HOME, "target/scala-*", ASSEMBLY_JAR))
+        SPARK_HLL_HOME, "target/scala-*", JAR_FILE))
 
     if len(JAR_PATH) != 1:
-        print(os.listdir(SPARK_HLL_HOME))
         print("Could not find assembled jar")
         sys.exit(-1)
 
@@ -50,11 +49,13 @@ setup(
     name='pyspark-hyperloglog',
     version=VERSION,
     description='PySpark UDFs for HyperLogLog',
+    keywords=['spark', 'udf', 'hyperloglog'],
     author='Anthony Miyaguchi',
     author_email='amiyaguchi@mozilla.com',
+    url='https://github.com/mozilla/spark-hyperloglog',
     packages=[
         'pyspark_hyperloglog',
-        'pyspark_hyperloglog.jars'
+        'pyspark.jars'
     ],
     install_requires=['pyspark'],
     extras_require={
@@ -66,10 +67,10 @@ setup(
     include_package_data=True,
     package_dir={
         'pyspark_hyperloglog': 'src',
-        'pyspark_hyperloglog.jars': 'deps/jars'
+        'pyspark.jars': 'deps/jars'
     },
     package_data={
-        'pyspark_hyperloglog.jars': ['*.jar']
+        'pyspark.jars': ['*.jar']
     },
 )
 

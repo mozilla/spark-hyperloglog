@@ -28,10 +28,6 @@ def test_data(spark):
     return spark.createDataFrame(data)
 
 
-def test_injected_extra_class_path(spark):
-    assert "hyperloglog" in spark.conf.get("spark.driver.extraClassPath")
-
-
 def test_register_functions(test_data):
     hll.register()
 
