@@ -35,8 +35,13 @@ package object functions {
   def registerUdf() {
     import org.apache.spark.sql.SparkSession
     val spark = SparkSession.builder().getOrCreate()
-    spark.udf.register("hll_merge", new HyperLogLogMerge)
-    spark.udf.register("hll_create", hllCreate _)
-    spark.udf.register("hll_cardinality", hllCardinality _)
+
+    val merge_udf = "hll_merge"
+    val create_udf = "hll_create"
+    val cardinality_udf = "hll_cardinality"
+
+    spark.udf.register(merge_udf, new HyperLogLogMerge)
+    spark.udf.register(create_udf, hllCreate _)
+    spark.udf.register(cardinality_udf, hllCardinality _)
   }
 }

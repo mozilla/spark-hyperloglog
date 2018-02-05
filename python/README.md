@@ -13,6 +13,28 @@ pip install pyspark_hyperloglog
 The package will register itself with the current pyspark installation
 location in the current site-packages. This allows for tests against spark in standalone mode.
 
+```python
+import SparkSession
+from pyspark.sql.functions import expr
+
+from pyspark_hyperloglog as hll
+
+
+spark = SparkSession.builder.getOrCreate()
+hll.register()
+
+frame = spark.createDataFrame([{'id': x} for x in ['a', 'b', 'c', 'c']])
+
+(
+    frame
+    .select(expr("hll_create(id, 12) as hll"))
+    .groupBy()
+    .agg(expr("hll_cardinality(hll_merge(hll)) as count"))
+    .show()
+)
+
+```
+
 ## Building
 
 In the top-level directory, build the `spark-hyperloglog` package.

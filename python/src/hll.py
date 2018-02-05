@@ -4,6 +4,8 @@ from pyspark.sql.functions import expr
 
 def register():
     spark = SparkSession.builder.getOrCreate()
+    # NOTE: at least one dataframe should be created before registration
+    spark.createDataFrame([])
     sc = spark.sparkContext
     sc._jvm.com.mozilla.spark.sql.hyperloglog.functions.package.registerUdf()
 
