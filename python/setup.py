@@ -12,10 +12,13 @@ import sys
 import shutil
 
 
-VERSION = '2.1.0'
+# read the version file in the package or in the root project directory
+version_file = "VERSION" if os.path.isfile("VERSION") else "../VERSION"
+with open(version_file, 'r') as f:
+    VERSION = f.read().strip()
 
 JARS_TARGET = 'deps/jars'
-JAR_FILE = "*-assembly-{}-*.jar".format(VERSION)
+JAR_FILE = "*-assembly-{}.jar".format(VERSION)
 
 
 is_packaging = (
@@ -41,13 +44,14 @@ if is_packaging:
         sys.exit(-1)
 
     os.symlink(JAR_PATH, os.path.join(JARS_TARGET, os.path.basename(JAR_PATH)))
+    os.symlink("../VERSION", "VERSION")
 else:
     if not os.path.exists(JARS_TARGET):
         print("The jar folder must exist")
 
 setup(
     name='pyspark-hyperloglog',
-    version=VERSION,
+    version=VERSION.split('-')[0],
     description='PySpark UDFs for HyperLogLog',
     keywords=['spark', 'udf', 'hyperloglog'],
     author='Anthony Miyaguchi',
@@ -76,3 +80,4 @@ setup(
 
 if is_packaging:
     shutil.rmtree('deps')
+    os.remove("VERSION")

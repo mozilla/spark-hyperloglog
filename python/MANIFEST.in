@@ -1,1 +1,2 @@
 recursive-include deps/jars *.jar
+include VERSION
