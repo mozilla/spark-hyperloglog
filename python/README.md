@@ -14,16 +14,16 @@ The package will register itself with the current pyspark installation
 location in the current site-packages. This allows for tests against spark in standalone mode.
 
 ```python
-import SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import expr
 
-from pyspark_hyperloglog as hll
+from pyspark_hyperloglog import hll
 
 
 spark = SparkSession.builder.getOrCreate()
-hll.register()
 
 frame = spark.createDataFrame([{'id': x} for x in ['a', 'b', 'c', 'c']])
+hll.register()
 
 (
     frame
@@ -34,6 +34,9 @@ frame = spark.createDataFrame([{'id': x} for x in ['a', 'b', 'c', 'c']])
 )
 
 ```
+
+If you run into issues during `.register()`, make sure that the dataframe has been created before registering the
+User Defined Functions.
 
 ## Building
 
