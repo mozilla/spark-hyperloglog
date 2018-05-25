@@ -1,6 +1,6 @@
 name := "spark-hyperloglog"
 
-version := "2.0.0-SNAPSHOT"
+version := scala.io.Source.fromFile("VERSION").mkString
 
 scalaVersion := "2.11.8"
 

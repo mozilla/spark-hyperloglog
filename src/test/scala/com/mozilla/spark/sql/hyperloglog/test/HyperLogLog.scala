@@ -39,10 +39,7 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
 
   override def beforeAll() {
 
-    val hllMerge = new HyperLogLogMerge
-    spark.udf.register("hll_merge", hllMerge)
-    spark.udf.register("hll_create", hllCreate _)
-    spark.udf.register("hll_cardinality", hllCardinality _)
+    registerUdf()
 
     val filteredHllMerge = new FilteredHyperLogLogMerge
     spark.udf.register("hll_filtered_merge", filteredHllMerge)
@@ -88,6 +85,6 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
   }
 
   override def afterAll = {
-    spark.stop()
+    spark.stop
   }
 }

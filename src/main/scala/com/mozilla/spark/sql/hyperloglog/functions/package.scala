@@ -14,6 +14,7 @@
 package com.mozilla.spark.sql.hyperloglog
 
 import com.twitter.algebird.{HyperLogLog, HyperLogLogMonoid}
+import com.mozilla.spark.sql.hyperloglog.aggregates.HyperLogLogMerge
 
 package object functions {
   def hllCardinality(hll: Array[Byte]): Long = {
@@ -29,5 +30,18 @@ package object functions {
         val monoid = new HyperLogLogMonoid(bits)
         HyperLogLog.toBytes(monoid.toHLL(x))
     }
+  }
+
+  def registerUdf() {
+    import org.apache.spark.sql.SparkSession
+    val spark = SparkSession.builder().getOrCreate()
+
+    val merge_udf = "hll_merge"
+    val create_udf = "hll_create"
+    val cardinality_udf = "hll_cardinality"
+
+    spark.udf.register(merge_udf, new HyperLogLogMerge)
+    spark.udf.register(create_udf, hllCreate _)
+    spark.udf.register(cardinality_udf, hllCardinality _)
   }
 }
