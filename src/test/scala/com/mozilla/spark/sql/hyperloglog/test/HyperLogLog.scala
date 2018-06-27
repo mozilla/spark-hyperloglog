@@ -84,7 +84,7 @@ class HyperLogLogTest extends FlatSpec with Matchers with BeforeAndAfterAll {
     rows(0)(0) should be (2)
   }
 
-  override def afterAll = {
+  override def afterAll: Unit = {
     spark.stop
   }
 }

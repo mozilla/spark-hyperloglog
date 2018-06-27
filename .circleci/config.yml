@@ -1,0 +1,40 @@
+####################
+# CircleCI configuration reference:
+#   https://circleci.com/docs/2.0/configuration-reference
+####################
+# CircleCI built-in environment variables:
+#   https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
+####################
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: mozilla/sbt:8u171_0.13.13
+    steps:
+      - checkout
+      - run:
+          name: Test
+          command: |
+            sbt coverage scalastyle test:scalastyle test coverageReport
+      - run:
+          name: Submit coverage data
+          command: |
+            bash <(curl -s https://codecov.io/bash)
+      - run:
+          name: Early return if this build is from a forked PR
+          command: |
+            if [ -n "$CIRCLE_PR_NUMBER" ] || [ "$CIRCLE_BRANCH" != "master" ]; then
+              echo "Stopping here; we only publish for pushes to the master branch"
+              circleci step halt
+            fi
+      - run:
+          name: Publish
+          command: |
+            sbt publish spPublish
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
