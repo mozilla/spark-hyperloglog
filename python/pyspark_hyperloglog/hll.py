@@ -1,11 +1,10 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Row
 from pyspark.sql.functions import expr
-
 
 def register():
     spark = SparkSession.builder.getOrCreate()
     # NOTE: at least one dataframe should be created before registration
-    spark.createDataFrame([{'a': 1}]).count()
+    spark.createDataFrame([Row(a=1)]).count()
     sc = spark.sparkContext
     sc._jvm.com.mozilla.spark.sql.hyperloglog.functions.package.registerUdf()
 

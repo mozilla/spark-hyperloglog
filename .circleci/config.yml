@@ -1,0 +1,46 @@
+####################
+# CircleCI configuration reference:
+#   https://circleci.com/docs/2.0/configuration-reference
+####################
+# CircleCI built-in environment variables:
+#   https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables
+####################
+
+version: 2
+jobs:
+  test:
+    docker:
+      - image: mozilla/sbt:8u171_0.13.13
+    steps:
+      - checkout
+      - run:
+          name: Test
+          command: |
+            sbt coverage scalastyle test:scalastyle test coverageReport
+      - run:
+          name: Submit coverage data
+          command: |
+            bash <(curl -s https://codecov.io/bash)
+
+  # The publish job only gets scheduled for commits to master; see workflows section below
+  publish:
+    docker:
+      - image: mozilla/sbt:8u171_0.13.13
+    steps:
+      - checkout
+      - run:
+          name: Publish
+          command: |
+            sbt publish spPublish
+
+workflows:
+  version: 2
+  test-publish:
+    jobs:
+      - test
+      - publish:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
