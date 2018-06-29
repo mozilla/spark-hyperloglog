@@ -22,6 +22,7 @@ jobs:
           command: |
             bash <(curl -s https://codecov.io/bash)
 
+  # The publish job only gets scheduled for commits to master; see workflows section below
   publish:
     docker:
       - image: mozilla/sbt:8u171_0.13.13
@@ -37,7 +38,6 @@ workflows:
   test-publish:
     jobs:
       - test
-      # Only publish if tests pass and this is a commit to master
       - publish:
           requires:
             - test
