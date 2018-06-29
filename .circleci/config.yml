@@ -8,7 +8,7 @@
 
 version: 2
 jobs:
-  build:
+  test:
     docker:
       - image: mozilla/sbt:8u171_0.13.13
     steps:
@@ -21,13 +21,12 @@ jobs:
           name: Submit coverage data
           command: |
             bash <(curl -s https://codecov.io/bash)
-      - run:
-          name: Early return if this build is from a forked PR
-          command: |
-            if [ -n "$CIRCLE_PR_NUMBER" ] || [ "$CIRCLE_BRANCH" != "master" ]; then
-              echo "Stopping here; we only publish for pushes to the master branch"
-              circleci step halt
-            fi
+
+  publish:
+    docker:
+      - image: mozilla/sbt:8u171_0.13.13
+    steps:
+      - checkout
       - run:
           name: Publish
           command: |
@@ -35,6 +34,13 @@ jobs:
 
 workflows:
   version: 2
-  build:
+  test-publish:
     jobs:
-      - build
+      - test
+      # Only publish if tests pass and this is a commit to master
+      - publish:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master
