@@ -1,11 +1,11 @@
 from setuptools import setup
+import os
 
-with open('VERSION', 'r') as f:
-    VERSION = f.read().strip()
+version = os.environ.get('CIRCLE_TAG', 'v2.2.snapshot').lstrip('v')
 
 setup(
     name='pyspark-hyperloglog',
-    version=VERSION.split('-')[0],
+    version=version,
     description='PySpark UDFs for HyperLogLog',
     keywords=['spark', 'udf', 'hyperloglog'],
     author='Anthony Miyaguchi',

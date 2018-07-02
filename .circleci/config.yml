@@ -22,7 +22,7 @@ jobs:
           command: |
             bash <(curl -s https://codecov.io/bash)
 
-  # The publish job only gets scheduled for commits to master; see workflows section below
+  # This publish job only runs for builds triggered by a git tag; see workflows section below.
   publish:
     docker:
       - image: mozilla/sbt:8u171_0.13.13
@@ -38,9 +38,12 @@ workflows:
   test-publish:
     jobs:
       - test
+      # Publish only runs on builds triggered by a new git tag of form vX.X.X
       - publish:
           requires:
             - test
           filters:
             branches:
-              only: master
+              ignore: /.*/
+            tags:
+              only: /^v.*/

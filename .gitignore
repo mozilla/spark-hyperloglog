@@ -4,3 +4,7 @@ target/
 .idea_modules/
 .DS_Store
 *.pyc
+venv/
+.tox/
+*.egg-info/
+.pytest_cache/
