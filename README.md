@@ -44,5 +44,16 @@ yields:
 ```
 
 ### Deployment
-Any commits to master should also trigger a circleci build that will do the sbt publishing for you
-to our local maven repo in s3 and to spark-packages.org.
+
+To publish a new version of the package, you need to
+[create a new release on GitHub](https://github.com/mozilla/spark-hyperloglog/releases/new)
+with a tag version starting with `v` like `v2.2.0`. The tag will trigger a CircleCI build
+that publishes to Mozilla's maven repo in S3.
+
+The CircleCI build will also attempt to publish the new tag to spark-packages.org,
+but due to
+[an outstanding bug in the sbt-spark-package plugin](https://github.com/databricks/sbt-spark-package/issues/31)
+that publish will likely fail. You can retry locally until is succeeds by creating a GitHub
+personal access token and, exporting the environment variables `GITHUB_USERNAME` and
+`GITHUB_PERSONAL_ACCESS_TOKEN`, and then repeatedly running `sbt spPublish` until you get a
+non-404 response.

@@ -1,6 +1,6 @@
 name := "spark-hyperloglog"
 
-version := scala.io.Source.fromFile("VERSION").mkString.stripLineEnd
+version := sys.env.getOrElse("CIRCLE_TAG", "v2.2-SNAPSHOT").stripPrefix("v")
 
 scalaVersion := "2.11.8"
 
@@ -24,6 +24,25 @@ credentials += Credentials(
   "spark-packages.org",
   sys.env.getOrElse("GITHUB_USERNAME", ""),
   sys.env.getOrElse("GITHUB_PERSONAL_ACCESS_TOKEN", ""))
+
+
+// Include the contents of the python/ directory at the root of our packaged jar;
+// `sbt spPublish` handles including python files for the zip sent to spark-packages.org,
+// but we also want the python bindings to be present in the jar we upload to S3 maven
+// via `sbt publish`.
+val pythonBesidesPyspark = new SimpleFileFilter({ f =>
+  val pythonDir = "/spark-hyperloglog/python"
+  val pyLibDir = pythonDir + "/pyspark_hyperloglog"
+  val p = f.getCanonicalPath
+  p match {
+    case _ if p.contains(pyLibDir) => false  // Don't exclude contents of pyspark dir
+    case _ if p.contains(pythonDir + "/") => true  // Exclude everything else under python/
+    case _ => false  // Don't exclude other files not under python/
+  }
+})
+unmanagedResourceDirectories in Compile += baseDirectory.value / "python"
+excludeFilter in unmanagedResources :=
+  HiddenFileFilter || pythonBesidesPyspark || "*.pyc" || "*.egg*"
 
 publishMavenStyle := true
 
