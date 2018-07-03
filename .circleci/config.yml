@@ -37,7 +37,10 @@ workflows:
   version: 2
   test-publish:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /^.*/  # Runs for all branches and tags
       # Publish only runs on builds triggered by a new git tag of form vX.X.X
       - publish:
           requires:
