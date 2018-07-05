@@ -44,6 +44,10 @@ unmanagedResourceDirectories in Compile += baseDirectory.value / "python"
 excludeFilter in unmanagedResources :=
   HiddenFileFilter || pythonBesidesPyspark || "*.pyc" || "*.egg*"
 
+// Since we're taking responsibility for including python files above, we need to
+// prevent sbt-spark-package from duplicating that work in spPackage.
+mappings in (Compile, spPackage) := (mappings in (Compile, packageBin)).value
+
 publishMavenStyle := true
 
 publishTo := {
